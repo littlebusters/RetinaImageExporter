@@ -1,95 +1,95 @@
 function LBretinaExporter()
 {
-  // get orignal slice objects
-  var orgDom = fw.getDocumentDOM();
-  orgDom.currentLayerNum = orgDom.layers.length - 1;
-  orgDom.selectAllOnLayer( orgDom.layers.length - 1, false, false );
-  var orgObjects = fw.selection;
-  if( !orgObjects.length ) {
-    alert( 'No objects in web layer... X(' );
-    return false;
-  }
+	// get orignal slice objects
+	var orgDom = fw.getDocumentDOM();
+	orgDom.currentLayerNum = orgDom.layers.length - 1;
+	orgDom.selectAllOnLayer( orgDom.layers.length - 1, false, false );
+	var orgObjects = fw.selection;
+	if( !orgObjects.length ) {
+	  alert( 'No objects in web layer... X(' );
+	  return false;
+	}
 
-  // get variable
-  var _postfix = prompt( 'postfix', '_x2' );
-  if( _postfix == null ) _postfix = '_x2';
-  var postfixLen = 0 - _postfix.length;
+	// get variable
+	var _postfix = prompt( 'postfix', '_x2' );
+	if( _postfix == null ) _postfix = '_x2';
+	var postfixLen = 0 - _postfix.length;
 
-  var width        = orgDom.width * 2;
-  var height       = orgDom.height * 2;
-  var resolution   = orgDom.resolution * 2;
-  var units        = orgDom.resolutionUnits;
-  var orgPageIndex = orgDom.currentPageNum;
-  
-  // Export //////////////////////////////////////////////////////////////////
+	var width        = orgDom.width * 2;
+	var height       = orgDom.height * 2;
+	var resolution   = orgDom.resolution * 2;
+	var units        = orgDom.resolutionUnits;
+	var orgPageIndex = orgDom.currentPageNum;
+	
+	// Export //////////////////////////////////////////////////////////////////
 
-  // duplicate x2 export temp page -------------------------------------------
-  orgDom.duplicatePage( orgPageIndex );
-  orgDom.changeCurrentPage( orgPageIndex + 1 );
-  orgDom.setDocumentImageSize( 
-    { left: 0, top: 0, right: width, bottom: height }, 
-    {pixelsPerUnit: resolution, units: units}, true 
-  );
+	// duplicate x2 export temp page -------------------------------------------
+	orgDom.duplicatePage( orgPageIndex );
+	orgDom.changeCurrentPage( orgPageIndex + 1 );
+	orgDom.setDocumentImageSize( 
+	  { left: 0, top: 0, right: width, bottom: height }, 
+	  {pixelsPerUnit: resolution, units: units}, true 
+	);
 
-  // get x2 slice objects
-  var exportDom = fw.getDocumentDOM();
-  exportDom.currentLayerNum = exportDom.layers.length - 1;
-  exportDom.selectAllOnLayer( exportDom.layers.length - 1, false, false );
-  var selected = fw.selection;
+	// get x2 slice objects
+	var exportDom = fw.getDocumentDOM();
+	exportDom.currentLayerNum = exportDom.layers.length - 1;
+	exportDom.selectAllOnLayer( exportDom.layers.length - 1, false, false );
+	var selected = fw.selection;
 
 
-  // set x2 slice name (copy from orignal slice name) & slice selection
-  var len = selected.length;
-  var sliceObj = new Array();
-  while( len-- )
-  {
-    if( '[object SliceHotspot]' == selected[len].__proto__ 
-      && _postfix == ( ( null != orgObjects[len].baseName ) ? orgObjects[len].baseName.slice( postfixLen ) : null ) )
-    {
-      selected[len].baseName = orgObjects[len].baseName;
-      sliceObj.push(selected[len]);
-    }
-  }
-  fw.selection = sliceObj;
+	// set x2 slice name (copy from orignal slice name) & slice selection
+	var len = selected.length;
+	var sliceObj = new Array();
+	while( len-- )
+	{
+	  if( '[object SliceHotspot]' == selected[len].__proto__ 
+	    && _postfix == ( ( null != orgObjects[len].baseName ) ? orgObjects[len].baseName.slice( postfixLen ) : null ) )
+	  {
+	    selected[len].baseName = orgObjects[len].baseName;
+	    sliceObj.push(selected[len]);
+	  }
+	}
+	fw.selection = sliceObj;
 
-  // x2 export & delete temp page
-  if( fw.selection.length ) fw.exportDocumentAs(null, null, null);
-  orgDom.deletePageAt( orgPageIndex + 1 );
-  
-  // duplicate x1 export temp page -------------------------------------------
-  orgDom.duplicatePage( orgPageIndex );
-  orgDom.changeCurrentPage( orgPageIndex + 1 );
-  
-  // get x slice objects
-  exportDom = fw.getDocumentDOM();
-  exportDom.currentLayerNum = exportDom.layers.length - 1;
-  exportDom.selectAllOnLayer( exportDom.layers.length - 1, false, false );
-  selected = fw.selection;
-  
-  // set x1 slice name (copy from orignal slice name) & slice selection
-  len = selected.length;
-  sliceObj = new Array();
-  while( len-- )
-  {
-    if( '[object SliceHotspot]' == selected[len].__proto__ && 
-      _postfix == ( ( null != orgObjects[len].baseName ) ? orgObjects[len].baseName.slice( postfixLen ) : null ) )
-    {
-      selected[len].baseName = orgObjects[len].baseName.substring( 0, orgObjects[len].baseName.length + postfixLen );
-      sliceObj.push(selected[len]);
-    } else if( '[object SliceHotspot]' == selected[len].__proto__ ) {
-      selected[len].baseName = orgObjects[len].baseName;
-      sliceObj.push(selected[len]);
-    }
-  }
-  fw.selection = sliceObj;
-  
-  // x1 export & delete temp page
-  if( fw.selection.length ) fw.exportDocumentAs(null, null, null);
-  orgDom.deletePageAt( orgPageIndex + 1 );
+	// x2 export & delete temp page
+	if( fw.selection.length ) fw.exportDocumentAs(null, null, null);
+	orgDom.deletePageAt( orgPageIndex + 1 );
+	
+	// duplicate x1 export temp page -------------------------------------------
+	orgDom.duplicatePage( orgPageIndex );
+	orgDom.changeCurrentPage( orgPageIndex + 1 );
+	
+	// get x slice objects
+	exportDom = fw.getDocumentDOM();
+	exportDom.currentLayerNum = exportDom.layers.length - 1;
+	exportDom.selectAllOnLayer( exportDom.layers.length - 1, false, false );
+	selected = fw.selection;
+	
+	// set x1 slice name (copy from orignal slice name) & slice selection
+	len = selected.length;
+	sliceObj = new Array();
+	while( len-- )
+	{
+	  if( '[object SliceHotspot]' == selected[len].__proto__ && 
+	    _postfix == ( ( null != orgObjects[len].baseName ) ? orgObjects[len].baseName.slice( postfixLen ) : null ) )
+	  {
+	    selected[len].baseName = orgObjects[len].baseName.substring( 0, orgObjects[len].baseName.length + postfixLen );
+	    sliceObj.push(selected[len]);
+	  } else if( '[object SliceHotspot]' == selected[len].__proto__ ) {
+	    selected[len].baseName = orgObjects[len].baseName;
+	    sliceObj.push(selected[len]);
+	  }
+	}
+	fw.selection = sliceObj;
+	
+	// x1 export & delete temp page
+	if( fw.selection.length ) fw.exportDocumentAs(null, null, null);
+	orgDom.deletePageAt( orgPageIndex + 1 );
 
-  return true;
+	return true;
 }
 
 LBretinaExporter();
 
-  
+	
