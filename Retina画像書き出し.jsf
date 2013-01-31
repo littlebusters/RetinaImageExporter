@@ -11,7 +11,7 @@ function LBretinaExporter()
 	}
 
 	// get variable
-	var _postfix = prompt( 'postfix', '_2x' );
+	var _postfix = prompt( 'Enter Postfix', '_2x' );
 	if( _postfix == null ) _postfix = '_2x';
 	var postfixLen = 0 - _postfix.length;
 
