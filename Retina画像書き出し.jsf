@@ -6,13 +6,13 @@ function LBretinaExporter()
 	orgDom.selectAllOnLayer( orgDom.layers.length - 1, false, false );
 	var orgObjects = fw.selection;
 	if( !orgObjects.length ) {
-	  alert( 'No objects in web layer... X(' );
-	  return false;
+		alert( 'No objects in web layer... X(' );
+		return false;
 	}
 
 	// get variable
-	var _postfix = prompt( 'postfix', '_x2' );
-	if( _postfix == null ) _postfix = '_x2';
+	var _postfix = prompt( 'Enter Postfix', '_2x' );
+	if( _postfix == null ) _postfix = '_2x';
 	var postfixLen = 0 - _postfix.length;
 
 	var width        = orgDom.width * 2;
@@ -20,76 +20,87 @@ function LBretinaExporter()
 	var resolution   = orgDom.resolution * 2;
 	var units        = orgDom.resolutionUnits;
 	var orgPageIndex = orgDom.currentPageNum;
+
+	// export settings
+	var exportSet = orgDom.exportSettings;
+	var orgExportSettings = exportSet;
+	exportSet.discardUnspecifiedSlices = true;
+	exportSet.exportFilesStyle = "Images Only";
+	exportSet.exportPageMode = "current page";
+    exportSet.sliceUsingUrls = true;
+
 	
 	// Export //////////////////////////////////////////////////////////////////
 
-	// duplicate x2 export temp page -------------------------------------------
+	// duplicate 2x export temp page -------------------------------------------
 	orgDom.duplicatePage( orgPageIndex );
 	orgDom.changeCurrentPage( orgPageIndex + 1 );
 	orgDom.setDocumentImageSize( 
-	  { left: 0, top: 0, right: width, bottom: height }, 
-	  {pixelsPerUnit: resolution, units: units}, true 
+		{ left: 0, top: 0, right: width, bottom: height }, 
+		{pixelsPerUnit: resolution, units: units}, true 
 	);
 
-	// get x2 slice objects
+	// get 2x slice objects
 	var exportDom = fw.getDocumentDOM();
 	exportDom.currentLayerNum = exportDom.layers.length - 1;
 	exportDom.selectAllOnLayer( exportDom.layers.length - 1, false, false );
 	var selected = fw.selection;
 
 
-	// set x2 slice name (copy from orignal slice name) & slice selection
+	// set 2x slice name (copy from orignal slice name) & slice selection
 	var len = selected.length;
 	var sliceObj = new Array();
 	while( len-- )
 	{
-	  if( '[object SliceHotspot]' == selected[len].__proto__ 
-	    && _postfix == ( ( null != orgObjects[len].baseName ) ? orgObjects[len].baseName.slice( postfixLen ) : null ) )
-	  {
-	    selected[len].baseName = orgObjects[len].baseName;
-	    sliceObj.push(selected[len]);
-	  }
+		if( '[object SliceHotspot]' == selected[len].__proto__ 
+			&& _postfix == ( ( null != orgObjects[len].baseName ) ? orgObjects[len].baseName.slice( postfixLen ) : null ) )
+		{
+			selected[len].baseName = orgObjects[len].baseName;
+			sliceObj.push(selected[len]);
+		}
 	}
 	fw.selection = sliceObj;
 
-	// x2 export & delete temp page
+	// 2x export & delete temp page
+	fw.getDocumentDOM().setExportSettings( exportSet );
 	if( fw.selection.length ) fw.exportDocumentAs(null, null, null);
 	orgDom.deletePageAt( orgPageIndex + 1 );
 	
-	// duplicate x1 export temp page -------------------------------------------
+	// duplicate 1x export temp page -------------------------------------------
 	orgDom.duplicatePage( orgPageIndex );
 	orgDom.changeCurrentPage( orgPageIndex + 1 );
 	
-	// get x slice objects
+	// get 1x slice objects
 	exportDom = fw.getDocumentDOM();
 	exportDom.currentLayerNum = exportDom.layers.length - 1;
 	exportDom.selectAllOnLayer( exportDom.layers.length - 1, false, false );
 	selected = fw.selection;
 	
-	// set x1 slice name (copy from orignal slice name) & slice selection
+	// set 1x slice name (copy from orignal slice name) & slice selection
 	len = selected.length;
 	sliceObj = new Array();
 	while( len-- )
 	{
-	  if( '[object SliceHotspot]' == selected[len].__proto__ && 
-	    _postfix == ( ( null != orgObjects[len].baseName ) ? orgObjects[len].baseName.slice( postfixLen ) : null ) )
-	  {
-	    selected[len].baseName = orgObjects[len].baseName.substring( 0, orgObjects[len].baseName.length + postfixLen );
-	    sliceObj.push(selected[len]);
-	  } else if( '[object SliceHotspot]' == selected[len].__proto__ ) {
-	    selected[len].baseName = orgObjects[len].baseName;
-	    sliceObj.push(selected[len]);
-	  }
+		if( '[object SliceHotspot]' == selected[len].__proto__ && 
+			_postfix == ( ( null != orgObjects[len].baseName ) ? orgObjects[len].baseName.slice( postfixLen ) : null ) )
+		{
+			selected[len].baseName = orgObjects[len].baseName.substring( 0, orgObjects[len].baseName.length + postfixLen );
+			sliceObj.push(selected[len]);
+		} else if( '[object SliceHotspot]' == selected[len].__proto__ ) {
+			selected[len].baseName = orgObjects[len].baseName;
+			sliceObj.push(selected[len]);
+		}
 	}
 	fw.selection = sliceObj;
 	
-	// x1 export & delete temp page
+	// 1x export & delete temp page
 	if( fw.selection.length ) fw.exportDocumentAs(null, null, null);
 	orgDom.deletePageAt( orgPageIndex + 1 );
+
+	// set original export setting
+	fw.getDocumentDOM().setExportSettings( orgExportSettings );
 
 	return true;
 }
 
 LBretinaExporter();
-
-	

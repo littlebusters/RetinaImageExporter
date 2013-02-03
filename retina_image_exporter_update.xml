@@ -1,0 +1,15 @@
+<ExtensionUpdateInformation>
+	<version>1.1.0</version>
+	<download>http://creative-tweet.net/downloads/RetinaImageExporter-1.1.0.zxp</download>
+	<description url="http://creative-tweet.net/tools/retina_image_exporter/detail.html">
+		<![CDATA[
+		1.1.0<br />
+		　・書き出し時オプションのデフォルトを変更<br />
+		　　- 書き出し：画像のみ<br />
+		　　- ページオプションのチェックボックスを「選択したスライスのみ」だけに変更<br />
+		1.0.1<br />
+		　・レイヤーが3つ以上ある場合にうまく動作しない不具合を修正。<br />
+		　・スライス名が設定されていない場合、エラーが出てしまう不具合を修正。
+		]]>
+	</description>
+</ExtensionUpdateInformation>
