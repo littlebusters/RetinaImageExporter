@@ -27,75 +27,80 @@ function LBretinaExporter()
 	exportSet.discardUnspecifiedSlices = true;
 	exportSet.exportFilesStyle = "Images Only";
 	exportSet.exportPageMode = "current page";
-    exportSet.sliceUsingUrls = true;
+	exportSet.sliceUsingUrls = true;
 
+	exporting( true );
+	exporting( false );
 	
-	// Export //////////////////////////////////////////////////////////////////
-
-	// duplicate 2x export temp page -------------------------------------------
-	orgDom.duplicatePage( orgPageIndex );
-	orgDom.changeCurrentPage( orgPageIndex + 1 );
-	orgDom.setDocumentImageSize( 
-		{ left: 0, top: 0, right: width, bottom: height }, 
-		{pixelsPerUnit: resolution, units: units}, true 
-	);
-
-	// get 2x slice objects
-	var exportDom = fw.getDocumentDOM();
-	exportDom.currentLayerNum = exportDom.layers.length - 1;
-	exportDom.selectAllOnLayer( exportDom.layers.length - 1, false, false );
-	var selected = fw.selection;
-
-
-	// set 2x slice name (copy from orignal slice name) & slice selection
-	var len = selected.length;
-	var sliceObj = new Array();
-	while( len-- )
+	/*
+	 * exporting images
+	 *
+	 * @param { boolean } isRetina: true is exporting @2x
+	 */
+	function exporting( isRetina )
 	{
-		if( '[object SliceHotspot]' == selected[len].__proto__ 
-			&& _postfix == ( ( null != orgObjects[len].baseName ) ? orgObjects[len].baseName.slice( postfixLen ) : null ) )
-		{
-			selected[len].baseName = orgObjects[len].baseName;
-			sliceObj.push(selected[len]);
-		}
-	}
-	fw.selection = sliceObj;
+		// duplicate page to temporary
+		orgDom.duplicatePage( orgPageIndex );
+		orgDom.changeCurrentPage( orgPageIndex + 1 );
 
-	// 2x export & delete temp page
-	fw.getDocumentDOM().setExportSettings( exportSet );
-	if( fw.selection.length ) fw.exportDocumentAs(null, null, null);
-	orgDom.deletePageAt( orgPageIndex + 1 );
-	
-	// duplicate 1x export temp page -------------------------------------------
-	orgDom.duplicatePage( orgPageIndex );
-	orgDom.changeCurrentPage( orgPageIndex + 1 );
-	
-	// get 1x slice objects
-	exportDom = fw.getDocumentDOM();
-	exportDom.currentLayerNum = exportDom.layers.length - 1;
-	exportDom.selectAllOnLayer( exportDom.layers.length - 1, false, false );
-	selected = fw.selection;
-	
-	// set 1x slice name (copy from orignal slice name) & slice selection
-	len = selected.length;
-	sliceObj = new Array();
-	while( len-- )
-	{
-		if( '[object SliceHotspot]' == selected[len].__proto__ && 
-			_postfix == ( ( null != orgObjects[len].baseName ) ? orgObjects[len].baseName.slice( postfixLen ) : null ) )
-		{
-			selected[len].baseName = orgObjects[len].baseName.substring( 0, orgObjects[len].baseName.length + postfixLen );
-			sliceObj.push(selected[len]);
-		} else if( '[object SliceHotspot]' == selected[len].__proto__ ) {
-			selected[len].baseName = orgObjects[len].baseName;
-			sliceObj.push(selected[len]);
+		if( isRetina ) {
+			// resizing document
+			orgDom.setDocumentImageSize( 
+				{ left: 0, top: 0, right: width, bottom: height }, 
+				{pixelsPerUnit: resolution, units: units}, true 
+			);
+
+			// fw.runScript("LBalert.jsf");
+			// TODO: get platform -> path to PsLE Scale.jsf
 		}
+
+		// get slice objects
+		var exportDom = fw.getDocumentDOM();
+		exportDom.currentLayerNum = exportDom.layers.length - 1;
+		exportDom.selectAllOnLayer( exportDom.layers.length - 1, false, false );
+		var selected = fw.selection;
+
+		// set slice name (copy from orignal slice name) & slice selection
+		var len = selected.length;
+		var sliceObj = new Array();
+
+		if( isRetina ) {
+			while( len-- )
+			{
+				if( '[object SliceHotspot]' == selected[len].__proto__ 
+					&& _postfix == ( ( null != orgObjects[len].baseName ) ? orgObjects[len].baseName.slice( postfixLen ) : null ) )
+				{
+					selected[len].baseName = orgObjects[len].baseName;
+					sliceObj.push(selected[len]);
+				}
+			}
+
+			// scaling PsLE
+			orgDom.setWebObjectsVisibility( false );
+			orgDom.selectAll();
+			// TODO: Scaling PsLE
+			orgDom.setWebObjectsVisibility( true );
+		} else {
+			while( len-- )
+			{
+				if( '[object SliceHotspot]' == selected[len].__proto__ && 
+					_postfix == ( ( null != orgObjects[len].baseName ) ? orgObjects[len].baseName.slice( postfixLen ) : null ) )
+				{
+					selected[len].baseName = orgObjects[len].baseName.substring( 0, orgObjects[len].baseName.length + postfixLen );
+					sliceObj.push(selected[len]);
+				} else if( '[object SliceHotspot]' == selected[len].__proto__ ) {
+					selected[len].baseName = orgObjects[len].baseName;
+					sliceObj.push(selected[len]);
+				}
+			}
+		}
+		fw.selection = sliceObj;
+
+		// delete temporary page after exporting
+		fw.getDocumentDOM().setExportSettings( exportSet );
+		if( fw.selection.length ) fw.exportDocumentAs(null, null, null);
+		// orgDom.deletePageAt( orgPageIndex + 1 );
 	}
-	fw.selection = sliceObj;
-	
-	// 1x export & delete temp page
-	if( fw.selection.length ) fw.exportDocumentAs(null, null, null);
-	orgDom.deletePageAt( orgPageIndex + 1 );
 
 	// set original export setting
 	fw.getDocumentDOM().setExportSettings( orgExportSettings );
