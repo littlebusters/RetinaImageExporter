@@ -1,7 +1,14 @@
+// Fireworks Extension: Command
+// Exporting High DPI Images
+// version: 2.0.0 beta
+// auther: @littlebusters
+// license: MIT
+
 function LBretinaExporter()
 {
 	// get orignal slice objects
 	var orgDom = fw.getDocumentDOM();
+
 	orgDom.currentLayerNum = orgDom.layers.length - 1;
 	orgDom.selectAllOnLayer( orgDom.layers.length - 1, false, false );
 	var orgObjects = fw.selection;
@@ -29,9 +36,25 @@ function LBretinaExporter()
 	exportSet.exportPageMode = "current page";
 	exportSet.sliceUsingUrls = true;
 
-	exporting( true );
-	exporting( false );
+	// exporting file name
+	if( orgDom.lastExportFile ) {
+		var orgExportFile = orgDom.lastExportFile;
+	} else {
+		var orgExportFile = orgDom.docTitleWithoutExtension;
+	}
+
+	// exporting
+	exporting( false ); // @1x
+	exporting( true );  // @2x
+
+	// set original export setting
+	fw.getDocumentDOM().setExportSettings( orgExportSettings );
+	orgDom.lastExportFile = orgExportFile;
+
+	return true;
+
 	
+	// functions ///////////////////////////////////////////////////////////////
 	/*
 	 * exporting images
 	 *
@@ -49,9 +72,6 @@ function LBretinaExporter()
 				{ left: 0, top: 0, right: width, bottom: height }, 
 				{pixelsPerUnit: resolution, units: units}, true 
 			);
-
-			// fw.runScript("LBalert.jsf");
-			// TODO: get platform -> path to PsLE Scale.jsf
 		}
 
 		// get slice objects
@@ -78,13 +98,14 @@ function LBretinaExporter()
 			// scaling PsLE
 			orgDom.setWebObjectsVisibility( false );
 			orgDom.selectAll();
-			// TODO: Scaling PsLE
+			PsLiveEffectsScaler();
 			orgDom.setWebObjectsVisibility( true );
+
 		} else {
 			while( len-- )
 			{
-				if( '[object SliceHotspot]' == selected[len].__proto__ && 
-					_postfix == ( ( null != orgObjects[len].baseName ) ? orgObjects[len].baseName.slice( postfixLen ) : null ) )
+				if( '[object SliceHotspot]' == selected[len].__proto__ 
+					&& _postfix == ( ( null != orgObjects[len].baseName ) ? orgObjects[len].baseName.slice( postfixLen ) : null ) )
 				{
 					selected[len].baseName = orgObjects[len].baseName.substring( 0, orgObjects[len].baseName.length + postfixLen );
 					sliceObj.push(selected[len]);
@@ -98,14 +119,191 @@ function LBretinaExporter()
 
 		// delete temporary page after exporting
 		fw.getDocumentDOM().setExportSettings( exportSet );
-		if( fw.selection.length ) fw.exportDocumentAs(null, null, null);
-		// orgDom.deletePageAt( orgPageIndex + 1 );
+		fw.getDocumentDOM().lastExportFile = sliceObj[0].baseName;
+		try {
+			if( fw.selection.length ) var result = fw.exportDocumentAs(null, null, null);
+			orgDom.deletePageAt( orgPageIndex + 1 );
+		} catch( e ) {
+			alert(e.message);
+		}
 	}
 
-	// set original export setting
-	fw.getDocumentDOM().setExportSettings( orgExportSettings );
 
-	return true;
+	/*
+	 * Scaling Ps Live Effect
+	 */
+	function PsLiveEffectsScaler()
+	{
+		var extractedObj  = new Array(); // filters(with scaled PsLE) & the selection
+
+		var lv            = 0; // nesting level
+		var extractedIdx  = 0; // index of object PsLE applied
+		var parentIdx     = new Array(); // index of parent object index
+		
+		var targetEfcts   = new Array( 'satin', 'dropShadow', 'innerShadow', 'outerGlow', 'innerGlow', 'solidFill', 'gradientFill', 'patternFill', 'bevelEmboss', 'stroke' );
+		var efctName      = new String(); // PsLE Name
+		var psLEFound     = false;
+
+		var scale = 2;
+
+		// find object PsLE applied.
+		findObject( fw.selection );
+
+		// apply new filter.
+		for( var objLen = extractedObj.length - 1; objLen >= 0; objLen-- ) {
+			fw.selection = extractedObj[ objLen ].selection;
+			orgDom.applyEffects( extractedObj[ objLen ].scaledFilters );
+		};
+		
+		// functions ///////////////////////////////////////////////////////////////
+		// find applied filter 
+		function findObject( _obj )
+		{
+			for ( var i = 0; i < _obj.length; i++ ) {
+
+				parentIdx.push( i );
+
+				if( _obj[ i ].toString() == '[object Group]' ) { // object is group
+
+					if( _obj[ i ].effectList ) { // if applied filter
+						findPsLE( _obj[ i ].effectList, _obj[ i ] );
+					}
+					lv++;
+
+					// recursive processing.
+					findObject( _obj[ i ].elements );
+
+				} else { // object isn't group
+
+					if( _obj[ i ].effectList ) { // if applied filter
+						findPsLE( _obj[ i ].effectList, _obj[ i ] );
+					}
+
+					parentIdx.pop();
+				}
+			};
+
+			lv--;
+			parentIdx.pop();
+		}
+
+		// find allied PsLE & PsLE Scaling
+		function findPsLE( _effectList, _obj )
+		{
+			var effectNum = _effectList.effects.length;
+
+			for( var efctLen = 0; efctLen < effectNum; efctLen++ ) {
+				if( _effectList.effects[ efctLen ].name.match( /photoshop/i ) ) { // check applied PsLE
+					psLEFound = true;
+					var scaledPsLE = new Object();
+					scaledPsLE = { category: 'UNUSED', effects: [], name: 'UNUSED' };
+					var efctName = new String();
+					break;
+				}
+			}
+
+			if( psLEFound ) { // applied PsLE
+
+				for( var i = 0; i < effectNum; i++ ) {
+				
+					if( 'Photoshop' == _effectList.effects[ i ].name.substr(0, 9) ) {
+
+						scaledPsLE.effects.push( {
+							BottomRight:     _effectList.effects[ i ].BottomRight,
+							EffectIsVisible: _effectList.effects[ i ].EffectIsVisible,
+							EffectMoaID:     _effectList.effects[ i ].EffectMoaID,
+							TopLeft:         _effectList.effects[ i ].TopLeft,
+							category:        _effectList.effects[ i ].category,
+							name:            _effectList.effects[ i ].name
+						} );
+
+						for( var enblLen = 0; enblLen < targetEfcts.length; enblLen++ ) {
+
+							efctName = targetEfcts[ enblLen ];
+
+							if( 1 == String( _effectList.effects[ i ][ efctName ] ).substring( 0, 1 ) ) {
+
+								var attrs = _effectList.effects[ i ][ efctName ].split( '&' );
+								switch( efctName ) {
+									case 'stroke':
+										attrs[ 2 ] = valueRounding( attrs[ 2 ], 'size' );
+										break;
+									case 'dropShadow':
+										attrs[ 5 ] = valueRounding( attrs[ 5 ], 'dist' );
+										attrs[ 6 ] = valueRounding( attrs[ 6 ], 'size' );
+										break;
+									case 'innerShadow':
+										attrs[ 5 ] = valueRounding( attrs[ 5 ], 'dist' );
+										attrs[ 6 ] = valueRounding( attrs[ 6 ], 'size' );
+										break;
+									case 'outerGlow':
+										var subAttrs = attrs[ 3 ].split( ':' );
+										subAttrs[ 2 ] = valueRounding( subAttrs[ 2 ], 'size' );
+										attrs[ 3 ] = subAttrs.join( ':' );
+										break;
+									case 'innerGlow':
+										var subAttrs = attrs[ 3 ].split( ':' );
+										subAttrs[ 2 ] = valueRounding( subAttrs[ 2 ], 'size' );
+										attrs[ 3 ] = subAttrs.join( ':' );
+										break;
+									case 'bevelEmboss':
+										attrs[ 10 ] = valueRounding( attrs[ 10 ], 'size' );
+										attrs[ 11 ] = valueRounding( attrs[ 11 ], 'soft' );
+										break;
+									case 'satin':
+										attrs[ 5 ] = valueRounding( attrs[ 5 ], 'dist' );
+										attrs[ 6 ] = valueRounding( attrs[ 6 ], 'size' );
+										break;
+								}
+
+								scaledPsLE.effects[ i ][ efctName ] = attrs.join( '&' );
+
+							} else if( _effectList.effects[ i ] ) {
+								scaledPsLE.effects[ i ][ efctName ] = _effectList.effects[ i ][ efctName ];
+							}
+						}
+					} else {
+						scaledPsLE.effects.push( _effectList.effects[ i ] );
+					}
+				};
+
+				extractedObj[ extractedIdx ] = new Object();
+				extractedObj[ extractedIdx ].selection = 'sel[' + parentIdx[ 0 ] + ']';
+				extractedObj[ extractedIdx ].scaledFilters = scaledPsLE;
+
+				for( var i = 1; i < parentIdx.length; i++ ) {
+					extractedObj[ extractedIdx ].selection += '.elements[' + parentIdx[ i ] + ']';
+				};
+
+				extractedObj[ extractedIdx ].selection = _obj;
+				extractedIdx++;
+			}
+
+			psLEFound = false;
+		}
+
+		// raunding scaled value
+		function valueRounding( _value, _type ) 
+		{
+			var rounded = Math.round( _value * scale );
+
+			if( 1 > rounded ) rounded = 1;
+			switch( _type ) {
+				case 'size':
+					if( 250 < rounded ) rounded = 250;
+					break;
+				case 'dist':
+					if( 250 < rounded ) rounded = 250;
+					break;
+				case 'soft':
+					if( 16 < rounded ) rounded = 16;
+					break;
+			}
+			return rounded + '.000000';
+		}
+
+		return true;
+	}
 }
 
 LBretinaExporter();
