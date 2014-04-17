@@ -1,12 +1,16 @@
 <ExtensionUpdateInformation>
-	<version>2.0.0</version>
-	<download>http://creative-tweet.net/downloads/RetinaImageExporter-2.0.0.zxp</download>
+	<version>2.0.1</version>
+	<download>http://creative-tweet.net/downloads/RetinaImageExporter-2.0.1.zxp</download>
 	<description url="http://creative-tweet.net/tools/retina_image_exporter/detail.html">
 		<![CDATA[
 		# 2.0.0
 
+		    - デフォルトの接尾辞を「@2x」に変更。
+
+		# 2.0.0
+
 		    - Photoshopライブエフェクトの拡大に対応。
-		    - @2xの書き出し画像名に、ポストフィックスを付加。
+		    - @2xの書き出し画像名に、接尾辞を付加。
 
 		# 1.1.0
 
